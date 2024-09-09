@@ -1,0 +1,37 @@
+
+    - name: Start nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Set VM number
+      set_fact:
+        vm_number: "{{ '1' if 'VM1' in inventory_hostname else '2' }}"
+
+    - name: Create index.html with custom message
+      ansible.builtin.copy:
+        dest: /var/www/html/index.html
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Hello World</title>
+          </head>
+          <body>
+              Hello World from SJSU-{{ vm_number }}
+          </body>
+          </html>
+
+    - name: Configure nginx to listen on port 8080
+      ansible.builtin.lineinfile:
+        path: /etc/nginx/sites-available/default
+        regexp: 'listen\s+80\s+default_server;'
+        line: 'listen 8080 default_server;'
+      notify: Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
